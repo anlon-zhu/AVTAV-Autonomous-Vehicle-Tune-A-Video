@@ -1,6 +1,6 @@
 # Tune-A-Video
 
-This repository is the official implementation of [Tune-A-Video](https://arxiv.org/abs/2212.11565).
+This repository is an experimentation on top of the implementation of [Tune-A-Video](https://arxiv.org/abs/2212.11565).
 
 **[Tune-A-Video: One-Shot Tuning of Image Diffusion Models for Text-to-Video Generation](https://arxiv.org/abs/2212.11565)**
 <br/>
