@@ -14,8 +14,10 @@ validation_data:
   prompts:
     - "a jeep car is moving on the beach"
     - "a jeep car is moving on the snow"
-    - "a jeep car is moving on the road, cartoon style"
     - "a sports car is moving on the road"
+    - "a bugatti is speeding on the road"
+    - "a Ford Mustang is drunk driving on the road"
+    - "a police car is moving on the road"
   video_length: 24
   width: 512
   height: 512
