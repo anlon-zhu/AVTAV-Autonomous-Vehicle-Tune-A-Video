@@ -3,7 +3,7 @@ output_dir: "./outputs/highway"
 
 train_data:
   video_path: "data/highway.mp4"
-  prompt: "a white van and truck drive by a dashcam on a forrested highway"
+  prompt: "a white van drives by a dashcam on a forrested highway"
   n_sample_frames: 24
   width: 512
   height: 512
@@ -12,11 +12,11 @@ train_data:
 
 validation_data:
   prompts:
-    - "only a white van drives by a dashcam on a forrested highway"
-    - "a green van and purple truck drive by a dashcam on a forrested highway"
-    - "a white van and truck drive by a dashcam on a snowy highway"
-    - "a neon blue Ford GT drive by a dashcam on a desert highway"
-    - "an aggressive BMW drives by a dashcam on a forrested highway"
+    - "a white van drives by a dashcam on an autumn forrested highway"
+    - "a Scooby Doo Bus drive by a dashcam on a forrested highway"
+    - "a white van drives by a dashcam on a snowy highway"
+    - "a blue FordGT drives by a dashcam on a desert highway"
+    - "a BMW aggressively cuts off a car on a dashcam on a forrested highway"
   video_length: 24
   width: 512
   height: 512
@@ -29,7 +29,7 @@ learning_rate: 3e-5
 train_batch_size: 1
 max_train_steps: 500
 checkpointing_steps: 1000
-validation_steps: 100
+validation_steps: 250
 trainable_modules:
   - "attn1.to_q"
   - "attn2.to_q"
