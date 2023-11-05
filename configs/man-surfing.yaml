@@ -12,10 +12,10 @@ train_data:
 
 validation_data:
   prompts:
-    - "a panda is surfing"
-    - "a boy, wearing a birthday hat, is surfing"
-    - "a raccoon is surfing, cartoon style"
+    - "a whale is surfing"
+    - "Rocket Raccoon is surfing on a rocket, anime style"
     - "Iron Man is surfing in the desert"
+    - "Silver Surfer is surfing on the Milky Way"
   video_length: 24
   width: 512
   height: 512
