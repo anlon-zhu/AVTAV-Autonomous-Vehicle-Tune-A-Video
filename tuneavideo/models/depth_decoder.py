@@ -33,7 +33,7 @@ class DepthDecoder(nn.Module):
             # upconv_0
             num_ch_in = self.num_ch_enc[-1] if i == 4 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
-            self.convs[("upconv", i, 0)] = Conv2D(
+            self.convs[("upconv", i, 0)] = ConvBlock(
                 num_ch_in, num_ch_out)
 
             # upconv_1
