@@ -11,6 +11,9 @@ import torch
 import torch.nn as nn
 
 from collections import OrderedDict
+from tuneavideo.models.attention import Transformer3DModel
+
+from tuneavideo.models.resnet import ResnetBlock3D
 from .layers import *
 
 
