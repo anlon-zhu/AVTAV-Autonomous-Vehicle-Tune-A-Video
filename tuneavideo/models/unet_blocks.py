@@ -293,13 +293,12 @@ class CrossAttnDownBlock3D(nn.Module):
                 UNetDepthDecoderBlock3D(
                     in_channels=in_channels,
                     temb_channels=temb_channels,
-                    eps=resnet_eps,
                     groups=resnet_groups,
                     dropout=dropout,
                     time_embedding_norm=resnet_time_scale_shift,
                     non_linearity=resnet_act_fn,
                     output_scale_factor=output_scale_factor,
-                    pre_norm=resnet_pre_norm,
+                    resnet_pre_norm=resnet_pre_norm,
                 )
             )
         self.attentions = nn.ModuleList(attentions)
