@@ -5,6 +5,7 @@ from torch import nn
 
 from .attention import Transformer3DModel
 from .resnet import Downsample3D, ResnetBlock3D, Upsample3D
+from .depth_decoder import UNetDepthDecoderBlock3D
 
 
 def get_down_block(
@@ -183,6 +184,19 @@ class UNetMidBlock3DCrossAttn(nn.Module):
                     upcast_attention=upcast_attention,
                 )
             )
+            attentions.append(
+                UNetDepthDecoderBlock3D(
+                    in_channels=in_channels,
+                    temb_channels=temb_channels,
+                    eps=resnet_eps,
+                    groups=resnet_groups,
+                    dropout=dropout,
+                    time_embedding_norm=resnet_time_scale_shift,
+                    non_linearity=resnet_act_fn,
+                    output_scale_factor=output_scale_factor,
+                    pre_norm=resnet_pre_norm,
+                )
+            )
             resnets.append(
                 ResnetBlock3D(
                     in_channels=in_channels,
@@ -273,6 +287,19 @@ class CrossAttnDownBlock3D(nn.Module):
                     use_linear_projection=use_linear_projection,
                     only_cross_attention=only_cross_attention,
                     upcast_attention=upcast_attention,
+                )
+            )
+            attentions.append(
+                UNetDepthDecoderBlock3D(
+                    in_channels=in_channels,
+                    temb_channels=temb_channels,
+                    eps=resnet_eps,
+                    groups=resnet_groups,
+                    dropout=dropout,
+                    time_embedding_norm=resnet_time_scale_shift,
+                    non_linearity=resnet_act_fn,
+                    output_scale_factor=output_scale_factor,
+                    pre_norm=resnet_pre_norm,
                 )
             )
         self.attentions = nn.ModuleList(attentions)
@@ -477,7 +504,19 @@ class CrossAttnUpBlock3D(nn.Module):
                     upcast_attention=upcast_attention,
                 )
             )
-
+            attentions.append(
+                UNetDepthDecoderBlock3D(
+                    in_channels=in_channels,
+                    temb_channels=temb_channels,
+                    eps=resnet_eps,
+                    groups=resnet_groups,
+                    dropout=dropout,
+                    time_embedding_norm=resnet_time_scale_shift,
+                    non_linearity=resnet_act_fn,
+                    output_scale_factor=output_scale_factor,
+                    pre_norm=resnet_pre_norm,
+                )
+            )
         self.attentions = nn.ModuleList(attentions)
         self.resnets = nn.ModuleList(resnets)
 

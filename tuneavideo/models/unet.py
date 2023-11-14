@@ -25,7 +25,6 @@ from .unet_blocks import (
 )
 from .resnet import InflatedConv3d
 
-
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
@@ -82,21 +81,29 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         time_embed_dim = block_out_channels[0] * 4
 
         # input
-        self.conv_in = InflatedConv3d(in_channels, block_out_channels[0], kernel_size=3, padding=(1, 1))
+        self.conv_in = InflatedConv3d(
+            in_channels, block_out_channels[0],
+            kernel_size=3, padding=(1, 1))
 
         # time
-        self.time_proj = Timesteps(block_out_channels[0], flip_sin_to_cos, freq_shift)
+        self.time_proj = Timesteps(
+            block_out_channels[0],
+            flip_sin_to_cos, freq_shift)
         timestep_input_dim = block_out_channels[0]
 
-        self.time_embedding = TimestepEmbedding(timestep_input_dim, time_embed_dim)
+        self.time_embedding = TimestepEmbedding(
+            timestep_input_dim, time_embed_dim)
 
         # class embedding
         if class_embed_type is None and num_class_embeds is not None:
-            self.class_embedding = nn.Embedding(num_class_embeds, time_embed_dim)
+            self.class_embedding = nn.Embedding(
+                num_class_embeds, time_embed_dim)
         elif class_embed_type == "timestep":
-            self.class_embedding = TimestepEmbedding(timestep_input_dim, time_embed_dim)
+            self.class_embedding = TimestepEmbedding(
+                timestep_input_dim, time_embed_dim)
         elif class_embed_type == "identity":
-            self.class_embedding = nn.Identity(time_embed_dim, time_embed_dim)
+            self.class_embedding = nn.Identity(
+                time_embed_dim, time_embed_dim)
         else:
             self.class_embedding = None
 
@@ -105,10 +112,12 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         self.up_blocks = nn.ModuleList([])
 
         if isinstance(only_cross_attention, bool):
-            only_cross_attention = [only_cross_attention] * len(down_block_types)
+            only_cross_attention = [
+                only_cross_attention] * len(down_block_types)
 
         if isinstance(attention_head_dim, int):
-            attention_head_dim = (attention_head_dim,) * len(down_block_types)
+            attention_head_dim = (
+                attention_head_dim,) * len(down_block_types)
 
         # down
         output_channel = block_out_channels[0]
@@ -155,7 +164,8 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
                 upcast_attention=upcast_attention,
             )
         else:
-            raise ValueError(f"unknown mid_block_type : {mid_block_type}")
+            raise ValueError(
+                f"unknown mid_block_type : {mid_block_type}")
 
         # count how many layers upsample the videos
         self.num_upsamplers = 0
@@ -170,7 +180,8 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
 
             prev_output_channel = output_channel
             output_channel = reversed_block_out_channels[i]
-            input_channel = reversed_block_out_channels[min(i + 1, len(block_out_channels) - 1)]
+            input_channel = reversed_block_out_channels[min(
+                i + 1, len(block_out_channels) - 1)]
 
             # add upsample block for all BUT final layer
             if not is_final_block:
@@ -202,9 +213,13 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
             prev_output_channel = output_channel
 
         # out
-        self.conv_norm_out = nn.GroupNorm(num_channels=block_out_channels[0], num_groups=norm_num_groups, eps=norm_eps)
+        self.conv_norm_out = nn.GroupNorm(
+            num_channels=block_out_channels[0],
+            num_groups=norm_num_groups, eps=norm_eps)
         self.conv_act = nn.SiLU()
-        self.conv_out = InflatedConv3d(block_out_channels[0], out_channels, kernel_size=3, padding=1)
+        self.conv_out = InflatedConv3d(
+            block_out_channels[0],
+            out_channels, kernel_size=3, padding=1)
 
     def set_attention_slice(self, slice_size):
         r"""
@@ -222,7 +237,8 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         """
         sliceable_head_dims = []
 
-        def fn_recursive_retrieve_slicable_dims(module: torch.nn.Module):
+        def fn_recursive_retrieve_slicable_dims(
+                module: torch.nn.Module):
             if hasattr(module, "set_attention_slice"):
                 sliceable_head_dims.append(module.sliceable_head_dim)
 
@@ -243,24 +259,26 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
             # make smallest slice possible
             slice_size = num_slicable_layers * [1]
 
-        slice_size = num_slicable_layers * [slice_size] if not isinstance(slice_size, list) else slice_size
+        slice_size = num_slicable_layers * [slice_size] if not isinstance(
+            slice_size, list) else slice_size
 
         if len(slice_size) != len(sliceable_head_dims):
             raise ValueError(
                 f"You have provided {len(slice_size)}, but {self.config} has {len(sliceable_head_dims)} different"
-                f" attention layers. Make sure to match `len(slice_size)` to be {len(sliceable_head_dims)}."
-            )
+                f" attention layers. Make sure to match `len(slice_size)` to be {len(sliceable_head_dims)}.")
 
         for i in range(len(slice_size)):
             size = slice_size[i]
             dim = sliceable_head_dims[i]
             if size is not None and size > dim:
-                raise ValueError(f"size {size} has to be smaller or equal to {dim}.")
+                raise ValueError(
+                    f"size {size} has to be smaller or equal to {dim}.")
 
         # Recursively walk through all the children.
         # Any children which exposes the set_attention_slice method
         # gets the message
-        def fn_recursive_set_attention_slice(module: torch.nn.Module, slice_size: List[int]):
+        def fn_recursive_set_attention_slice(
+                module: torch.nn.Module, slice_size: List[int]):
             if hasattr(module, "set_attention_slice"):
                 module.set_attention_slice(slice_size.pop())
 
@@ -269,10 +287,14 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
 
         reversed_slice_size = list(reversed(slice_size))
         for module in self.children():
-            fn_recursive_set_attention_slice(module, reversed_slice_size)
+            fn_recursive_set_attention_slice(
+                module, reversed_slice_size)
 
     def _set_gradient_checkpointing(self, module, value=False):
-        if isinstance(module, (CrossAttnDownBlock3D, DownBlock3D, CrossAttnUpBlock3D, UpBlock3D)):
+        if isinstance(
+            module,
+            (CrossAttnDownBlock3D, DownBlock3D, CrossAttnUpBlock3D,
+             UpBlock3D)):
             module.gradient_checkpointing = value
 
     def forward(
@@ -307,13 +329,16 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
         forward_upsample_size = False
         upsample_size = None
 
-        if any(s % default_overall_up_factor != 0 for s in sample.shape[-2:]):
-            logger.info("Forward upsample size to force interpolation output size.")
+        if any(s % default_overall_up_factor != 0
+               for s in sample.shape[-2:]):
+            logger.info(
+                "Forward upsample size to force interpolation output size.")
             forward_upsample_size = True
 
         # prepare attention_mask
         if attention_mask is not None:
-            attention_mask = (1 - attention_mask.to(sample.dtype)) * -10000.0
+            attention_mask = (
+                1 - attention_mask.to(sample.dtype)) * -10000.0
             attention_mask = attention_mask.unsqueeze(1)
 
         # center input if necessary
@@ -329,7 +354,9 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
                 dtype = torch.float32 if is_mps else torch.float64
             else:
                 dtype = torch.int32 if is_mps else torch.int64
-            timesteps = torch.tensor([timesteps], dtype=dtype, device=sample.device)
+            timesteps = torch.tensor(
+                [timesteps],
+                dtype=dtype, device=sample.device)
         elif len(timesteps.shape) == 0:
             timesteps = timesteps[None].to(sample.device)
 
@@ -346,12 +373,14 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
 
         if self.class_embedding is not None:
             if class_labels is None:
-                raise ValueError("class_labels should be provided when num_class_embeds > 0")
+                raise ValueError(
+                    "class_labels should be provided when num_class_embeds > 0")
 
             if self.config.class_embed_type == "timestep":
                 class_labels = self.time_proj(class_labels)
 
-            class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
+            class_emb = self.class_embedding(
+                class_labels).to(dtype=self.dtype)
             emb = emb + class_emb
 
         # pre-process
@@ -368,21 +397,24 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
                     attention_mask=attention_mask,
                 )
             else:
-                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
+                sample, res_samples = downsample_block(
+                    hidden_states=sample, temb=emb)
 
             down_block_res_samples += res_samples
 
         # mid
         sample = self.mid_block(
-            sample, emb, encoder_hidden_states=encoder_hidden_states, attention_mask=attention_mask
-        )
+            sample, emb, encoder_hidden_states=encoder_hidden_states,
+            attention_mask=attention_mask)
 
         # up
         for i, upsample_block in enumerate(self.up_blocks):
             is_final_block = i == len(self.up_blocks) - 1
 
-            res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
-            down_block_res_samples = down_block_res_samples[: -len(upsample_block.resnets)]
+            res_samples = down_block_res_samples[-len(
+                upsample_block.resnets):]
+            down_block_res_samples = down_block_res_samples[: -len(
+                upsample_block.resnets)]
 
             # if we have not reached the final block and need to forward the
             # upsample size, we do it here
@@ -400,8 +432,9 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
                 )
             else:
                 sample = upsample_block(
-                    hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
-                )
+                    hidden_states=sample, temb=emb,
+                    res_hidden_states_tuple=res_samples,
+                    upsample_size=upsample_size)
         # post-process
         sample = self.conv_norm_out(sample)
         sample = self.conv_act(sample)
@@ -415,7 +448,8 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
     @classmethod
     def from_pretrained_2d(cls, pretrained_model_path, subfolder=None):
         if subfolder is not None:
-            pretrained_model_path = os.path.join(pretrained_model_path, subfolder)
+            pretrained_model_path = os.path.join(
+                pretrained_model_path, subfolder)
 
         config_file = os.path.join(pretrained_model_path, 'config.json')
         if not os.path.isfile(config_file):
