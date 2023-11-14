@@ -269,14 +269,8 @@ def main(
             with accelerator.accumulate(unet):
                 # Convert videos to latent space
                 pixel_values = batch["pixel_values"].to(weight_dtype)
-                original_channels = pixel_values.shape[2]
-                print(original_channels)
-                # Add an additional channel, e.g., set it to zeros for simplicity
-                new_channel = torch.zeros_like(
-                    pixel_values[:, :, : 1, :, :])
-                pixel_values = torch.cat(
-                    [pixel_values, new_channel], dim=2)
                 video_length = pixel_values.shape[1]
+                print(pixel_values.shape[2])
                 pixel_values = rearrange(
                     pixel_values, "b f c h w -> (b f) c h w")
                 latents = vae.encode(pixel_values).latent_dist.sample()
