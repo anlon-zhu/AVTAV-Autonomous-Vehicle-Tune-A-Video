@@ -3,8 +3,6 @@
 import torch
 from torch import nn
 
-from .depth_decoder import DepthDecoder
-
 from .attention import Transformer3DModel
 from .resnet import Downsample3D, ResnetBlock3D, Upsample3D
 
@@ -145,7 +143,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         dual_cross_attention=False,
         use_linear_projection=False,
         upcast_attention=False,
-        depth_decoder=True,  # Add a flag to enable or disable depth decoding
     ):
         super().__init__()
 
@@ -204,13 +201,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         self.attentions = nn.ModuleList(attentions)
         self.resnets = nn.ModuleList(resnets)
 
-        self.depth_decoder = DepthDecoder(
-            num_ch_enc=[32, 64, 128, 256],
-            scales=[0],  # Adjust scales based on your requirements
-            num_output_channels=1,  # Adjust the number of output channels as needed
-            use_skips=True,
-        ) if depth_decoder else None
-
     def forward(
             self, hidden_states, temb=None, encoder_hidden_states=None,
             attention_mask=None):
@@ -220,15 +210,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
                 hidden_states,
                 encoder_hidden_states=encoder_hidden_states).sample
             hidden_states = resnet(hidden_states, temb)
-
-        if self.depth_decoder is not None:
-            depth_output = self.depth_decoder(
-                [hidden_states])["disp", 0]
-
-        # Concatenate depth_output with hidden_states
-        if depth_output is not None:
-            hidden_states = torch.cat(
-                [hidden_states, depth_output], dim=1)
 
         return hidden_states
 
