@@ -269,10 +269,12 @@ def main(
             with accelerator.accumulate(unet):
                 # Convert videos to latent space
                 pixel_values = batch["pixel_values"].to(weight_dtype)
-                new_channel = torch.ones_like(
-                    pixel_values[:, : 1, :, :])  # Adjust the size as needed
+                print(original_channels=pixel_values.shape[2])
+                # Add an additional channel, e.g., set it to zeros for simplicity
+                new_channel = torch.zeros_like(
+                    pixel_values[:, :, : 1, :, :])
                 pixel_values = torch.cat(
-                    [pixel_values, new_channel], dim=1)
+                    [pixel_values, new_channel], dim=2)
                 video_length = pixel_values.shape[1]
                 pixel_values = rearrange(
                     pixel_values, "b f c h w -> (b f) c h w")
